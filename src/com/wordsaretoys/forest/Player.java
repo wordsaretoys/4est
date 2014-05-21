@@ -9,6 +9,9 @@ import com.wordsaretoys.rise.utility.Interval;
  */
 public class Player {
 
+	static final float CollideAt = 0.05f;
+	static final float TargetAt = -0.9f;
+	
 	// player eye-line camera
 	public Camera camera;
 	
@@ -24,11 +27,33 @@ public class Player {
 	Vector velocity = new Vector();
 	Vector normal = new Vector();
 	
+	// map listener
+	Map.Listener mapper;
+	
+	// target object id
+	long target;
+	
 	/**
 	 * ctor
 	 */
 	public Player() {
 		camera = new Camera(30, 0.01f, 100);
+		mapper = new Map.Listener() {
+			Vector op = new Vector();
+			@Override
+			public void onObject(long id, int what, float x, float y, float z, float r) {
+				op.set(x, y, z).sub(camera.position);
+				float d = op.length() - r;
+				op.norm().neg();
+				if (d <= CollideAt) {
+					normal.add(op);
+				}
+				float p = op.dot(camera.front);
+				if (p < TargetAt) {
+					target = id;
+				}
+			}
+		};
 	}
 	
 	public void setLook(float dx, float dy) {
@@ -53,6 +78,14 @@ public class Player {
 		
 		// move camera if thrusting
 		direction.copy(camera.front).mul(moving ? 1 : 0);
+
+		// any collisions or targets in the near distance?
+		Vector cp = camera.position;
+		target = 0;
+		normal.set(0, 0, 0);
+		Shared.map.scanVolume(cp.x, cp.y, cp.z, 1, mapper);
+		normal.mul(velocity.length());
+		Shared.dbg.set("target", target == 0 ? "none" : Long.toString(target));
 		
 		// determine new velocity and position
 		direction.mul(dt);

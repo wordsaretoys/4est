@@ -83,20 +83,6 @@ public class Audio {
 	}
 
 	/**
-	 * increase volume one log step
-	 */
-	public void louden() {
-		volume = Math.min(10f, volume * 1.25f);
-	}
-	
-	/**
-	 * decrease volume one log step
-	 */
-	public void soften() {
-		volume = Math.max(0.01f, volume * 0.75f);
-	}
-
-	/**
 	 * startup and initialization  
 	 */
 	private void init() {
@@ -230,7 +216,6 @@ public class Audio {
 		Whistler wh0, wh1;
 		float [] scale;
 		float rate, time;
-		float[] buffer;
 		
 		public Voice(float[] scale, float rate) {
 			this.scale = scale;
@@ -240,10 +225,9 @@ public class Audio {
 			wh1 = new Whistler(0.002f, 0.75f);
 			wh1.setPitch(nextNote());
 			time = 0;
-			buffer = new float[bufferLength];
 		}
 		
-		public void fill() {
+		public void fill(float[] buffer) {
 			wh0.fill();
 			wh1.fill();
 			for (int i = 0; i < buffer.length; i++) {
@@ -255,7 +239,7 @@ public class Audio {
 					wh1 = swap;
 					wh1.setPitch(nextNote());
 				}
-				buffer[i] = (1 - time) * wh0.buffer[i] + time * wh1.buffer[i];
+				buffer[i] += (1 - time) * wh0.buffer[i] + time * wh1.buffer[i];
 			}
 		}
 		
@@ -270,7 +254,7 @@ public class Audio {
 	class Chorus {
 		
 		float[] scale = {440.0f, 528.0f, 616.0f, 704.0f, 792.0f};
-		Voice voice0, voice1;
+		Voice voice0, voice1, voice2;
 		
 		public Chorus() {
 			voice0 = new Voice(scale, 0.25f);
@@ -278,11 +262,8 @@ public class Audio {
 		}
 		
 		public void fill(float buffer[]) {
-			voice0.fill();
-			voice1.fill();
-			for (int i = 0; i < buffer.length; i++) {
-				buffer[i] += voice0.buffer[i] + voice1.buffer[i];
-			}
+			voice0.fill(buffer);
+			voice1.fill(buffer);
 		}
 	}
 
