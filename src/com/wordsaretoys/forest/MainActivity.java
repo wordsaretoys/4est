@@ -19,5 +19,16 @@ public class MainActivity extends Activity {
 		}
 		shared.onCreate(this);
 	}
+	
+	@Override
+	protected void onPause() {
+		super.onPause();
+		Shared.audio.pause();
+	}
+	
+	protected void onResume() {
+		super.onResume();
+		Shared.audio.play();
+	}
 
 }

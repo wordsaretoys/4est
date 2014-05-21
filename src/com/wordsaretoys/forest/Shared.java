@@ -29,6 +29,9 @@ public class Shared {
 	static Context context;
 	static Dbg dbg;
 	static GlView glView;
+	
+	// audio engine
+	static Audio audio;
 
 	/**
 	 * ctor, only call if shared object doesn't exist
@@ -38,6 +41,7 @@ public class Shared {
 		game = new Game();
 		map = new Map();
 		rotors = new Rotors();
+		audio = new Audio();
 	}
 	
 	/**
