@@ -114,18 +114,18 @@ public class Skybox {
 		RadialGradient rg = new RadialGradient(256, 256, 256, rgc, rgp, TileMode.CLAMP);
 		p.setShader(rg);
 		canvas.drawCircle(256, 256, 256, p);
-		
+/*		
 		p.setShader(null);
 		p.setColor(0x3fffffff);
-		for (int i = 0; i < 8192; i++) {
+		for (int i = 0; i < 18192; i++) {
 			float cx = rng.nextInt(2048);
 			float cy = 256 + rng.nextInt(64) - 32;
-			float r = rng.nextFloat() * 8;
+			float r = rng.nextFloat() * 24;
 			int k = rng.nextInt(256);
-			p.setColor(0x3f000000 | k | (k >> 8) | (k >> 16));
+			p.setColor(0x0f000000 | k | (k << 8) | (k << 16));
 			canvas.drawCircle(cx, cy, r, p);
 		}
-		
+*/		
 		return b;
 	}
 	

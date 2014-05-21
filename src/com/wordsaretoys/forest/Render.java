@@ -20,7 +20,6 @@ public class Render implements GLSurfaceView.Renderer {
 
 	// model objects
 	Debris debris;
-	Weeds weeds;
 	Skybox skybox;
 
 	// ui/ai callback functor
@@ -53,7 +52,6 @@ public class Render implements GLSurfaceView.Renderer {
 		
 		// create anything that requires GL context
 		skybox = new Skybox();
-		weeds = new Weeds();
 		// including objects need by others
 		Shared.debris = debris = new Debris();
 		
@@ -69,7 +67,7 @@ public class Render implements GLSurfaceView.Renderer {
 	public void onDrawFrame(GL10 gl) {
 
 		// update game state and player kinematics
-//		Shared.game.update();
+		Shared.rotors.update();
 		Shared.player.update();
 
 		// update any android UI elements
@@ -77,8 +75,7 @@ public class Render implements GLSurfaceView.Renderer {
 
 		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 
-//		debris.draw();
-//		weeds.draw();
+		debris.draw();
 		skybox.draw();
 		
 		// handle frame counting / timing
@@ -104,7 +101,6 @@ public class Render implements GLSurfaceView.Renderer {
 		public void run() {
 			resume();
 			while (inPump()) {
-				weeds.update();
 				debris.update();
 			}
 		}

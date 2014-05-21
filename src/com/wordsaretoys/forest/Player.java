@@ -29,7 +29,6 @@ public class Player {
 	 */
 	public Player() {
 		camera = new Camera(30, 0.01f, 100);
-		camera.position.set(1000, 1000, 1000);
 	}
 	
 	public void setLook(float dx, float dy) {

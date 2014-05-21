@@ -7,7 +7,6 @@ import android.view.GestureDetector;
 import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.MotionEvent;
 
-import com.wordsaretoys.rise.geometry.Camera;
 import com.wordsaretoys.rise.geometry.Vector;
 
 public class GlView extends GLSurfaceView {
@@ -35,7 +34,7 @@ public class GlView extends GLSurfaceView {
 	 * periodic update
 	 */
 	public void update() {
-		String target = "nothing";
+/*		String target = "nothing";
 		Camera camera = Shared.player.camera;
 		Vector p = Shared.debris.locate(camera.position);
 		if (p != null) {
@@ -45,7 +44,7 @@ public class GlView extends GLSurfaceView {
 			float dp = t_p.dot(camera.front);
 			target = dp + ", " + dd;
 		}
-		Shared.dbg.set("target", target);
+		Shared.dbg.set("target", target); */
 	}
 	Vector t_p = new Vector();
 

@@ -1,11 +1,11 @@
 package com.wordsaretoys.forest;
 
-import java.util.HashMap;
 import java.util.Random;
 
+import android.graphics.Bitmap;
 import android.opengl.GLES20;
+import android.util.Log;
 
-import com.wordsaretoys.forest.Hash3D.Cell;
 import com.wordsaretoys.rise.geometry.Vector;
 import com.wordsaretoys.rise.glwrapper.Mesh;
 import com.wordsaretoys.rise.glwrapper.Shader;
@@ -20,23 +20,16 @@ public class Debris {
 	static float Refresh = 8f;
 	
 	static float Range = 40f;
-	static float Step = 10f;
-	static float Odds = 0.25f;
 
 	VertexBuffer vertex;
 	IndexBuffer index;
 	Mesh mesh;
 	
-	Hash3D map;
-	HashMap<Long, Object> complete;
-
 	Shader shader;
 
 	Texture texture;
-	int texId;
+	int texId, rotorsId;
 	
-	int fadeLightId, fadeDistanceId;
-
 	Vector last = new Vector(Integer.MAX_VALUE, 0, 0);
 	Vector ppos = Shared.player.camera.position;
 
@@ -54,24 +47,16 @@ public class Debris {
         	Asset.getTextAsset(Shared.context, "shader/debrisFrag.glsl")
         );
 
-		texture = new Texture(
-				Asset.getImageAsset(Shared.context, "texture/debris-nx.jpg"),
-				Asset.getImageAsset(Shared.context, "texture/debris-ny.jpg"),
-				Asset.getImageAsset(Shared.context, "texture/debris-nz.jpg"),
-				Asset.getImageAsset(Shared.context, "texture/debris-px.jpg"),
-				Asset.getImageAsset(Shared.context, "texture/debris-py.jpg"),
-				Asset.getImageAsset(Shared.context, "texture/debris-pz.jpg"),
-				512, 512);
+		Bitmap noise = Asset.getBitmapAsset(Shared.context, "texture/noise.jpg");
+		
+		texture = new Texture(noise, noise, noise, noise, noise, noise);
 		texId = shader.getUniformId("image");
-		
-		fadeLightId = shader.getUniformId("fadeLight");
-		fadeDistanceId = shader.getUniformId("fadeDistance");
-		
-		map = new Hash3D(16384);
-		complete = new HashMap<Long, Object>();
+		rotorsId = shader.getUniformId("rotations");
 
 		int[] attr = {
 				shader.getAttributeId("center"), 3,
+				shader.getAttributeId("normal"), 3,
+				shader.getAttributeId("rotor"), 1,
 				shader.getAttributeId("position"), 3,
 				shader.getAttributeId("texturec"), 3,
 		};
@@ -94,53 +79,26 @@ public class Debris {
 
 		vertex.reset();
 		index.reset();
-			
-		float cx = (float) Math.floor(ppos.x / Step) * Step;
-		float cy = (float) Math.floor(ppos.y / Step) * Step;
-		float cz = (float) Math.floor(ppos.z / Step) * Step;
 
-		// iterate over the visible range in blocks
-		for (float dx = -Range + Step / 2; dx < Range; dx += Step) {
-			float x = cx + dx;
-			for (float dy = -Range + Step / 2; dy < Range; dy += Step) {
-				float y = cy + dy;
-				for (float dz = -Range + Step / 2; dz < Range; dz += Step) {
-					float z = cz + dz;
-					Cell cell = map.get(x, y, z);
-					if (cell.odds < Odds) {
-						model(cell, x, y, z);
-					}
+		Shared.map.scanVolume(ppos.x, ppos.y, ppos.z, 20, new Map.Listener() {
+			@Override
+			public void onObject(long id, int what, float x, float y, float z, float r) {
+				if (what == Map.Shard) {
+					model(id, x, y, z, r);
 				}
 			}
-		}
+		});
 		
 		Shared.glView.queueEvent(new Runnable() {
+			@Override
 			public void run() {
 				mesh.build(vertex, index);
+				Log.d("debris", "built " + vertex.length / mesh.stride + " vertices");
 			}
 		});
 		
 	}
 
-	/**
-	 * find the closest debris object, if any
-	 * @param p position to search for
-	 * @return object coordinates or null if no object in block
-	 */
-	public Vector locate(Vector p) {
-		float cx = (float) Math.floor(p.x / Step) * Step + Step / 2;
-		float cy = (float) Math.floor(p.y / Step) * Step + Step / 2;
-		float cz = (float) Math.floor(p.z / Step) * Step + Step / 2;
-		Cell cell = map.get(cx, cy, cz);
-		if (cell.odds < Odds) {
-			t_p.set(cx, cy, cz);
-			long id = Misc.hash(cx, cy, cz, 0);
-			return !complete.containsKey(id) ? t_p : null;
-		}
-		return null;
-	}
-	Vector t_p = new Vector();
-	
 	/**
 	 * draw the mesh
 	 */
@@ -150,11 +108,8 @@ public class Debris {
 		shader.activate();
 		shader.setMatrix("modelview", Shared.player.camera.modelview);
 		shader.setMatrix("projector", Shared.player.camera.projector);
+		GLES20.glUniformMatrix3fv(rotorsId, Rotors.RotorCount, false, Shared.rotors.matrixes, 0);
 		
-		float t = Shared.game.getNormalTime();
-		GLES20.glUniform1f(fadeLightId, 0.75f * t * t * t);
-		GLES20.glUniform1f(fadeDistanceId, 40 * t);
-
 		texture.bind(0, texId);
 		mesh.draw();
 		GLES20.glDisable(GLES20.GL_CULL_FACE);
@@ -163,16 +118,18 @@ public class Debris {
 	/**
 	 * generates a single chunk of debris
 	 */
-	private void model(Cell cell, float x, float y, float z) {
-		rng.setSeed(cell.seed);
+	private void model(long seed, float cx, float cy, float cz, float mr) {
+		rng.setSeed(seed);
 		int k = vertex.length / mesh.stride;
+		int d = rng.nextInt(Rotors.RotorCount); 
 		int sides = (int)(6 + rng.nextInt(6));
-		float mr = rng.nextFloat();
+		
+		Vector n = new Vector();
 		
 		// top and bottom axis points
-		vertex.set(x, y, z);
+		vertex.set(cx, cy, cz, 0, 1, 0, d);
 		vertex.set(0, mr, 0, 0, 1, 0);
-		vertex.set(x, y, z);
+		vertex.set(cx, cy, cz, 0, -1, 0, d);
 		vertex.set(0, -mr, 0, 0, -1, 0);
 		
 		// go around the ring
@@ -188,20 +145,22 @@ public class Debris {
 				r = mr * Misc.scale(rng.nextFloat(), 0.25f, 1);
 				h = mr * Misc.scale(rng.nextFloat(), 0.25f, 1);
 			}
-			float x0 = (float) Math.cos(ang0);
-			float z0 = (float) Math.sin(ang0);
-			float px = r * x0;
-			float pz = r * z0;
-			float tx = px / mr;
+			float x0 = (float)Math.cos(ang0);
+			float z0 = (float)Math.sin(ang0);
+			float x = r * x0;
+			float z = r * z0;
+			float tx = x / mr;
 			float ty = h / mr;
-			float tz = pz / mr;
+			float tz = z / mr;
 
 			// generate two vertexes to comprise top and bottom surfaces
-			vertex.set(x, y, z);
-			vertex.set(px, h, pz, tx, ty, tz);
+			n.set(x0, 1, z0).norm();
+			vertex.set(cx, cy, cz, n.x, n.y, n.z, d);
+			vertex.set(x, h, z, tx, ty, tz);
 			
-			vertex.set(x, y, z);
-			vertex.set(px, -h, pz, tx, -ty, tz);
+			n.set(x0, -1, z0).norm();
+			vertex.set(cx, cy, cz, n.x, n.y, n.z, d);
+			vertex.set(x, -h, z, tx, -ty, tz);
 
 			if (i > 0) {
 				index.set(k, j + 2, j);
@@ -210,6 +169,7 @@ public class Debris {
 				index.set(j, j + 3, j + 1);
 				j += 2;
 			}
+			
 		}
 	}	
 }

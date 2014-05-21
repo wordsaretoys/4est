@@ -19,6 +19,12 @@ public class Shared {
 	// debris map
 	static Debris debris;
 	
+	// objects map
+	static Map map;
+	
+	// rotational states
+	static Rotors rotors;
+	
 	// objects with UI state; created on activity create
 	static Context context;
 	static Dbg dbg;
@@ -30,6 +36,8 @@ public class Shared {
 	public Shared() {
 		player = new Player();
 		game = new Game();
+		map = new Map();
+		rotors = new Rotors();
 	}
 	
 	/**
