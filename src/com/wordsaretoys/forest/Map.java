@@ -38,8 +38,8 @@ public class Map {
 		float z1 = (float)Math.floor((cz + r) / CellSize) * CellSize;
 		float hs = CellSize * 0.5f;
 		
-		if (y0 < -2) y0 = -2;
-		if (y1 > 2) y1 = 2;
+		if (y0 < -2) y0 = -3;
+		if (y1 > 2) y1 = 3;
 		
 		for (float x = x0 + hs; x < x1; x += CellSize) {
 			for (float y = y0 + hs; y < y1; y += CellSize) {

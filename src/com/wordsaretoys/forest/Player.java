@@ -86,6 +86,9 @@ public class Player {
 		Shared.map.scanVolume(cp.x, cp.y, cp.z, 1, mapper);
 		normal.mul(velocity.length());
 		Shared.dbg.set("target", target == 0 ? "none" : Long.toString(target));
+		if (normal.length() > 0) {
+			Shared.audio.crash.start();
+		}
 		
 		// determine new velocity and position
 		direction.mul(dt);

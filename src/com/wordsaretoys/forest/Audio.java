@@ -39,6 +39,9 @@ public class Audio {
 	// ambient chorus
 	Chorus chorus;
 	
+	// crash sound effect
+	Crash crash;
+	
 	/**
 	 * ctor; called on first reference to singleton
 	 */
@@ -100,6 +103,7 @@ public class Audio {
 		stager = new float[bufferLength];
 
 		chorus = new Chorus();
+		crash = new Crash();
 		
 		track = new AudioTrack(
 				AudioManager.STREAM_MUSIC,
@@ -139,6 +143,7 @@ public class Audio {
 	private void stage() {
 		Arrays.fill(stager, 0);
 		chorus.fill(stager);
+		crash.fill(stager);
 		
 		// headroom mix from staging buffer to audio buffer
 		for (int i = 0, il = buffer.length; i < il; i++) {
@@ -267,4 +272,31 @@ public class Audio {
 		}
 	}
 
+	/**
+	 * generates a crash sound
+	 */
+	class Crash {
+
+		float[] sound;
+		int index;
+		
+		public Crash() {
+//			float rate = 1 / (sampleRate * 0.001f);
+			sound = new float[65536];
+			for (int i = 0; i < sound.length; i++) {
+//				sound[i] = (float)(2 * Math.random() - 1);
+			}
+		}
+		
+		public void start() {
+			index = 0;
+		}
+		
+		public void fill(float[] buffer) {
+			for (int i = 0; i < buffer.length && index < sound.length; i++, index++) {
+				buffer[i] += sound[index];
+			}
+		}
+		
+	}
 }

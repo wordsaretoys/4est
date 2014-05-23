@@ -75,7 +75,10 @@ public class Render implements GLSurfaceView.Renderer {
 
 		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 
+		GLES20.glEnable(GLES20.GL_CULL_FACE);
+		GLES20.glCullFace(GLES20.GL_BACK);
 		debris.draw();
+		GLES20.glDisable(GLES20.GL_CULL_FACE);
 		skybox.draw();
 		
 		// handle frame counting / timing
